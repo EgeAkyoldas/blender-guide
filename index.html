@@ -1193,11 +1193,11 @@ footer .easter-egg {
 }
 
 .chat-input-wrap {
-  padding: 14px 16px;
+  padding: 12px 16px;
   border-top: 1px solid var(--border);
   display: flex;
   gap: 8px;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .chat-input {
@@ -2260,14 +2260,12 @@ function renderMarkdown(text) {
 (function initImageUpload() {
   const uploadBtn = document.getElementById('chatImgUpload');
   const fileInput = document.getElementById('chatImgInput');
+  const chatInput = document.getElementById('chatInput');
   if (!uploadBtn || !fileInput) return;
 
   uploadBtn.addEventListener('click', () => fileInput.click());
 
-  fileInput.addEventListener('change', async () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-
+  async function processImage(file) {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const base64 = ev.target.result;
@@ -2314,6 +2312,24 @@ function renderMarkdown(text) {
       }
     };
     reader.readAsDataURL(file);
+  }
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (file) processImage(file);
+  });
+
+  chatInput.addEventListener('paste', async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) processImage(file);
+        break;
+      }
+    }
   });
 })();
 
