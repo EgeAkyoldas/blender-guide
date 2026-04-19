@@ -2,9 +2,6 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-const API_KEY = process.env.GEMINI_API_KEY;
-
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -108,6 +105,10 @@ function sendJson(res, status, data) {
 }
 
 export default async function handler(req, res) {
+  const MODEL = (process.env.GEMINI_MODEL || "gemini-2.5-flash").replace(/['"]/g, "").trim();
+  const rawApiKey = process.env.GEMINI_API_KEY || "";
+  const API_KEY = rawApiKey.replace(/['"]/g, "").trim();
+
   if (req.method === "OPTIONS") {
     Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
     return res.status(204).end();
