@@ -6,10 +6,9 @@
 
 # Dependencies
 node_modules/
-netlify/functions/node_modules/
 
-# Netlify build çıktıları
-.netlify/
+# Vercel build
+.vercel/
 
 # OS
 .DS_Store
