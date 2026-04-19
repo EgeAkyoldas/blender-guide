@@ -501,15 +501,23 @@ body::after {
 
 .cards-group-content {
   padding: 20px;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
   max-height: none;
   overflow: visible;
-  transition: max-height 0.3s, padding 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cards-group.collapsed .cards-group-header {
+  border-bottom: none;
 }
 
 .cards-group.collapsed .cards-group-content {
   max-height: 0;
   padding: 0 20px;
   overflow: hidden;
+  display: none !important;
 }
 
 /* ==================== PROGRESS ==================== */
@@ -1880,7 +1888,7 @@ function renderCards() {
           <div class="cards-group-title">${cat.emoji} ${cat.label}</div>
           <div class="cards-group-toggle">▼</div>
         </div>
-        <div class="cards-group-content" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+        <div class="cards-group-content">
           ${cardsHtml}
         </div>
       </div>`;
