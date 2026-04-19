@@ -452,6 +452,66 @@ body::after {
   opacity: 0.8;
 }
 
+/* ==================== COLLAPSIBLE GROUPS ==================== */
+.cards-group {
+  margin-bottom: 32px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.cards-group-header {
+  background: linear-gradient(135deg, var(--bg-elevated), var(--bg-panel));
+  padding: 16px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  transition: background 0.2s;
+  border-bottom: 1px solid var(--border);
+}
+
+.cards-group-header:hover {
+  background: linear-gradient(135deg, var(--bg-panel), var(--bg-elevated));
+}
+
+.cards-group-title {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cards-group-toggle {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: transform 0.3s;
+}
+
+.cards-group.collapsed .cards-group-toggle {
+  transform: rotate(-90deg);
+}
+
+.cards-group-content {
+  padding: 20px;
+  max-height: none;
+  overflow: visible;
+  transition: max-height 0.3s, padding 0.3s;
+}
+
+.cards-group.collapsed .cards-group-content {
+  max-height: 0;
+  padding: 0 20px;
+  overflow: hidden;
+}
+
 /* ==================== PROGRESS ==================== */
 .progress-bar-wrap {
   background: var(--bg-panel);
@@ -1784,7 +1844,16 @@ function renderCards() {
     document.getElementById("noResults").classList.add("show");
   } else {
     document.getElementById("noResults").classList.remove("show");
-    grid.innerHTML = filtered.map(s => {
+
+    const grouped = {};
+    filtered.forEach(s => {
+      if (!grouped[s.category]) grouped[s.category] = [];
+      grouped[s.category].push(s);
+    });
+
+    grid.innerHTML = Object.entries(grouped).map(([catId, items]) => {
+      const cat = categories.find(c => c.id === catId);
+      const cardsHtml = items.map(s => {
       const cat = categories.find(c => c.id === s.category);
       const isLearned = learned.has(s.id);
       return `<div class="card ${isLearned ? 'learned' : ''}" data-id="${s.id}">
@@ -1803,6 +1872,16 @@ function renderCards() {
         <div class="card-section">
           <div class="card-label">Nasıl</div>
           <div class="card-text">${s.how}</div>
+        </div>
+      </div>`;
+      }).join("");
+      return `<div class="cards-group">
+        <div class="cards-group-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <div class="cards-group-title">${cat.emoji} ${cat.label}</div>
+          <div class="cards-group-toggle">▼</div>
+        </div>
+        <div class="cards-group-content" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+          ${cardsHtml}
         </div>
       </div>`;
     }).join("");
