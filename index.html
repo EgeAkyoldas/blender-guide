@@ -1326,6 +1326,36 @@ footer .easter-egg {
 }
 .avatar-upload-btn:hover { border-color: var(--primary); color: var(--primary); }
 
+.chat-img-upload {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: none;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  transition: border-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+.chat-img-upload:hover { border-color: var(--primary); color: var(--primary); }
+.chat-img-upload:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.chat-img-input { display: none; }
+
+.msg-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 10px;
+  margin-top: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(255,107,26,0.3);
+}
+
 .action-notice {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
@@ -1554,6 +1584,8 @@ footer .easter-egg {
     </div>
     <button class="avatar-btn" id="avatarBtn" title="Avatar değiştir">🧑</button>
     <textarea class="chat-input" id="chatInput" placeholder="Blender hakkında bir şey sor..." rows="1"></textarea>
+    <button class="chat-img-upload" id="chatImgUpload" title="Screenshot yükle" aria-label="Görsel yükle">📸</button>
+    <input type="file" id="chatImgInput" class="chat-img-input" accept="image/*">
     <button class="chat-send" id="chatSend" disabled aria-label="Gönder">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="22" y1="2" x2="11" y2="13"/>
@@ -2222,6 +2254,67 @@ function renderMarkdown(text) {
   document.addEventListener('touchend', () => { isDragging = false; autoSpin = true; });
 
   render();
+})();
+
+// ==================== IMAGE UPLOAD IN CHAT ====================
+(function initImageUpload() {
+  const uploadBtn = document.getElementById('chatImgUpload');
+  const fileInput = document.getElementById('chatImgInput');
+  if (!uploadBtn || !fileInput) return;
+
+  uploadBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const base64 = ev.target.result;
+      const input = document.getElementById('chatInput');
+      input.value = '';
+      uploadBtn.disabled = true;
+
+      const msg = addMessage('user', '[📸 Görsel analiz ediliyor...]');
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            history: [
+              ...chatHistory,
+              {
+                role: 'user',
+                parts: [
+                  { text: 'Bu Blender ekran görüntüsünü analiz et. Hangi Blender modülü açık? Ne işleri yapabilir? Neye dikkat etmesi gerekir?' },
+                  { inlineData: { mimeType: file.type, data: base64.split(',')[1] } }
+                ]
+              }
+            ]
+          })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        msg.remove();
+        const bubble = addMessage('bot', data.text || 'Yanıt alınamadı');
+
+        chatHistory.push({ role: 'user', parts: [{ text: '[📸 Görsel]' }] });
+        chatHistory.push({ role: 'assistant', parts: [{ text: data.text }] });
+
+        fileInput.value = '';
+      } catch (err) {
+        msg.remove();
+        addMessage('bot', `Görsel analiz hatası: ${err.message}`);
+      } finally {
+        uploadBtn.disabled = false;
+        document.getElementById('chatInput').focus();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
 })();
 
 // ==================== AVATAR PICKER ====================
