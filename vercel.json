@@ -1,7 +1,8 @@
 {
   "functions": {
     "api/**/*.js": {
-      "includeFiles": "persona.yaml"
+      "includeFiles": "persona.yaml",
+      "maxDuration": 60
     }
   },
   "headers": [
